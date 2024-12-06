@@ -54,7 +54,7 @@ class MainPOSPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final userState = Provider.of<UserState>(context);
     final openOrdersState = Provider.of<OpenOrdersState>(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.deepOrange,
@@ -90,7 +90,8 @@ class MainPOSPage extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Time: ${DateTime.now().toLocal().toString().split(' ')[1].substring(0, 5)}'),
+              Text(
+                  'Time: ${DateTime.now().toLocal().toString().split(' ')[1].substring(0, 5)}'),
               Text('User: ${userState.isLoggedIn ? 'testuser' : 'Guest'}'),
             ],
           ),
@@ -107,7 +108,7 @@ class MainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final userState = Provider.of<UserState>(context);
     final openOrdersState = Provider.of<OpenOrdersState>(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kwika POS'),
@@ -216,8 +217,7 @@ class MainScreen extends StatelessWidget {
                                       return AlertDialog(
                                         title: const Text('Delete Order'),
                                         content: Text(
-                                          'Are you sure you want to delete the order "${order.name}"?'
-                                        ),
+                                            'Are you sure you want to delete the order "${order.name}"?'),
                                         actions: [
                                           TextButton(
                                             onPressed: () {
@@ -227,7 +227,8 @@ class MainScreen extends StatelessWidget {
                                           ),
                                           TextButton(
                                             onPressed: () {
-                                              openOrdersState.removeOrder(index);
+                                              openOrdersState
+                                                  .removeOrder(index);
                                               Navigator.of(context).pop();
                                             },
                                             style: TextButton.styleFrom(
