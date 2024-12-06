@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_state.dart';
 import '../core/models/product.dart';
+import 'order_finalize_page.dart';
 
 class POSSalePage extends StatefulWidget {
   final OpenOrder? existingOrder;
@@ -723,7 +724,12 @@ class _POSSalePageState extends State<POSSalePage> {
                                 onPressed: cartState.items.isEmpty
                                     ? null
                                     : () {
-                                        // Place order logic
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const OrderFinalizePage(),
+                                          ),
+                                        );
                                       },
                                 child: const Text('Place Order'),
                               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'models/product.dart';
+import 'models/coupon.dart';
 import '../services/product_service.dart';
 
 class UserState extends ChangeNotifier {
@@ -30,14 +31,24 @@ class CartItem {
 
 class CartState extends ChangeNotifier {
   final List<CartItem> _items = [];
+  double _tipPercentage = 0.0;
+  final Set<Coupon> _coupons = {};
 
   List<CartItem> get items => _items;
+  Set<Coupon> get coupons => _coupons;
+  double get tipPercentage => _tipPercentage;
 
   double get subtotal => _items.fold(0, (sum, item) => sum + (item.product.price * item.quantity));
   
   double get hst => _items.fold(0, (sum, item) => sum + (item.product.hstAmount * item.quantity));
   
-  double get total => subtotal + hst;
+  double get couponDiscount {
+    return _coupons.fold(0, (sum, coupon) => sum + coupon.calculateDiscount(subtotal));
+  }
+
+  double get tipAmount => (subtotal - couponDiscount) * (_tipPercentage / 100);
+  
+  double get total => subtotal + hst - couponDiscount + tipAmount;
 
   void addItem(Product product, {int quantity = 1}) {
     final existingIndex = _items.indexWhere((item) => item.product.id == product.id);
@@ -67,8 +78,35 @@ class CartState extends ChangeNotifier {
     }
   }
 
+  void updateQuantity(int index, int quantity) {
+    if (index >= 0 && index < _items.length && quantity > 0) {
+      _items[index].quantity = quantity;
+      notifyListeners();
+    }
+  }
+
   void clearCart() {
     _items.clear();
+    notifyListeners();
+  }
+
+  void setTipPercentage(double percentage) {
+    _tipPercentage = percentage;
+    notifyListeners();
+  }
+
+  void addCoupon(Coupon coupon) {
+    _coupons.add(coupon);
+    notifyListeners();
+  }
+
+  void removeCoupon(Coupon coupon) {
+    _coupons.remove(coupon);
+    notifyListeners();
+  }
+
+  void clearCoupons() {
+    _coupons.clear();
     notifyListeners();
   }
 }
