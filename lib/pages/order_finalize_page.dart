@@ -4,6 +4,7 @@ import '../core/app_state.dart';
 import '../core/models/product.dart';
 import '../core/models/payment_method.dart';
 import '../core/models/coupon.dart';
+import '../services/receipt_service.dart';
 
 class OrderFinalizePage extends StatefulWidget {
   const OrderFinalizePage({super.key});
@@ -43,25 +44,61 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
       }
     }
 
-    // TODO: Process payment based on selected method
-    // For now, just show a success message and clear the cart
+    _processPayment(_selectedPaymentMethod!);
+  }
+
+  void _processPayment(PaymentMethod paymentMethod) async {
+    final cartState = context.read<CartState>();
+    final amountTendered = _selectedPaymentMethod == PaymentMethod.cash
+        ? double.parse(_amountTenderedController.text)
+        : cartState.total;
+
+    // Show loading dialog
     showDialog(
       context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    // Simulate payment processing
+    await Future.delayed(const Duration(seconds: 1));
+
+    if (!mounted) return;
+    Navigator.pop(context); // Remove loading dialog
+
+    // Show success dialog
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
         title: const Text('Payment Successful'),
-        content: Text(
-            'Payment processed via ${_selectedPaymentMethod!.displayName}'),
+        content: Text('Payment processed via ${paymentMethod.displayName}'),
         actions: [
           TextButton(
             onPressed: () {
-              cartState.clearCart();
-              Navigator.of(context).popUntil((route) => route.isFirst);
+              Navigator.pop(context);
             },
             child: const Text('OK'),
           ),
         ],
       ),
     );
+
+    // Print receipt
+    await ReceiptService.printReceipt(
+      cartState: cartState,
+      paymentMethod: paymentMethod,
+      context: context,
+      amountTendered: amountTendered,
+    );
+
+    // Clear the cart
+    cartState.clearCart();
+    
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   Widget _buildPaymentOption(PaymentMethod method) {

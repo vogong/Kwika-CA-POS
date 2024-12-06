@@ -8,16 +8,20 @@ import 'pages/login_page.dart';
 import 'pages/splash_page.dart';
 import 'pages/pos_sale_page.dart';
 import 'pages/settings_page.dart';
+import 'services/nfc_service.dart';
 
 void main() {
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserState()),
-        ChangeNotifierProvider(create: (_) => CartState()),
+        ChangeNotifierProvider(create: (_) => SettingsState()),
+        ChangeNotifierProxyProvider<SettingsState, CartState>(
+          create: (context) => CartState(context.read<SettingsState>()),
+          update: (context, settings, cart) => cart ?? CartState(settings),
+        ),
         ChangeNotifierProvider(create: (_) => OpenOrdersState()),
         ChangeNotifierProvider(create: (_) => ProductState()),
-        ChangeNotifierProvider(create: (_) => SettingsState()),
       ],
       child: const MyApp(),
     ),
@@ -101,8 +105,68 @@ class MainPOSPage extends StatelessWidget {
   }
 }
 
-class MainScreen extends StatelessWidget {
+class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  StreamSubscription<String>? _nfcSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _startNFCScanning();
+  }
+
+  @override
+  void dispose() {
+    _nfcSubscription?.cancel();
+    NFCService.dispose();
+    super.dispose();
+  }
+
+  Future<void> _startNFCScanning() async {
+    try {
+      // Subscribe to NFC tag detections
+      _nfcSubscription = NFCService.tagStream.listen((String tagId) {
+        if (mounted) {
+          // Navigate to POS sale page with the NFC tag ID
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => POSSalePage(),
+            ),
+          );
+        }
+      });
+
+      // Start continuous scanning
+      await NFCService.startContinuousScanning();
+    } catch (e) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text('NFC Error'),
+              content: Text(e.toString()),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('OK'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -255,27 +319,64 @@ class MainScreen extends StatelessWidget {
           // Main Content Area
           Expanded(
             child: Center(
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add_shopping_cart, size: 32),
-                label: const Text(
-                  'New Sale',
-                  style: TextStyle(fontSize: 24),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepOrange,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 48,
-                    vertical: 24,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const POSSalePage(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // NFC Scanning Status Box - Only show on Android
+                  if (NFCService.isMobile)
+                    Container(
+                      margin: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: const Offset(2, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.nfc, color: Colors.white, size: 30),
+                          SizedBox(width: 10),
+                          Text(
+                            'Ready to Scan Card',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                },
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add_shopping_cart, size: 32),
+                    label: const Text(
+                      'New Sale',
+                      style: TextStyle(fontSize: 24),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 48,
+                        vertical: 24,
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const POSSalePage(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           ),

@@ -6,11 +6,11 @@ class Settings {
   final String taxName;
 
   Settings({
-    this.currencySymbol = '\$',
-    this.currencyCode = 'USD',
-    this.taxRate = 13.0,
+    this.currencySymbol = 'R',
+    this.currencyCode = 'ZAR',
+    this.taxRate = 15.0,
     this.taxInclusive = false,
-    this.taxName = 'HST',
+    this.taxName = 'Tax',
   });
 
   Settings copyWith({

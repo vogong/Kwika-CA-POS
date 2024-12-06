@@ -541,7 +541,7 @@ class _POSSalePageState extends State<POSSalePage> {
                                       padding: const EdgeInsets.all(8.0),
                                       gridDelegate:
                                           const SliverGridDelegateWithMaxCrossAxisExtent(
-                                        maxCrossAxisExtent: 300,
+                                        maxCrossAxisExtent: 400,
                                         childAspectRatio: 2.5,
                                         crossAxisSpacing: 8,
                                         mainAxisSpacing: 8,
@@ -905,9 +905,9 @@ class _POSSalePageState extends State<POSSalePage> {
                             children: [
                               Text(
                                   '${item.quantity} × ${settingsState.formatCurrency(item.product.price)}'),
-                              if (settingsState.settings.taxInclusive)
+                              if (settingsState.settings.taxInclusive && !item.product.taxExempt)
                                 Text(
-                                  ' (${settingsState.settings.taxName} included)',
+                                  ' (incl)',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey[600],
@@ -984,7 +984,7 @@ class _POSSalePageState extends State<POSSalePage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
-                              'Total:',
+                              'Total1:',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,

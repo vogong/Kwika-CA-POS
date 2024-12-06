@@ -37,7 +37,22 @@ class CartState extends ChangeNotifier {
   double _tipPercentage = 0;
   final Set<Coupon> _coupons = {};
   final Set<Voucher> _vouchers = {};
-  final SettingsState _settings = SettingsState();
+  SettingsState _settings;
+
+  CartState(this._settings) {
+    // Listen to settings changes
+    _settings.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void dispose() {
+    _settings.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    notifyListeners();
+  }
 
   List<CartItem> get items => _items;
   Set<Coupon> get coupons => _coupons;
@@ -45,49 +60,42 @@ class CartState extends ChangeNotifier {
   double get tipPercentage => _tipPercentage;
 
   double get subtotal {
-    if (_settings.settings.taxInclusive) {
-      // If tax inclusive, subtotal is price with tax removed for taxable items
-      return _items.fold(0, (sum, item) {
+    return _items.fold<double>(0.0, (sum, item) {
+      if (_settings.settings.taxInclusive && !item.product.taxExempt) {
+        // For tax-inclusive prices, remove the tax component
         final taxRate = _settings.settings.taxRate / 100;
-        if (!item.product.taxExempt) {
-          // Remove tax from price for taxable items
-          return sum + ((item.product.price / (1 + taxRate)) * item.quantity);
-        }
-        return sum + (item.product.price * item.quantity);
-      });
-    }
-    // If tax exclusive, subtotal is just sum of prices
-    return _items.fold(
-        0, (sum, item) => sum + (item.product.price * item.quantity));
+        return sum + ((item.product.price / (1 + taxRate)) * item.quantity);
+      }
+      // For tax-exclusive prices or tax-exempt items, use the price as is
+      return sum + (item.product.price * item.quantity);
+    });
   }
 
   double get hst {
     final taxRate = _settings.settings.taxRate / 100;
-    return _items.fold(0, (sum, item) {
+    return _items.fold<double>(0.0, (sum, item) {
       if (item.product.taxExempt) {
-        // No tax for tax-exempt items
-        return sum;
+        return sum; // No tax for tax-exempt items
       }
       
       if (_settings.settings.taxInclusive) {
-        // For tax-inclusive items, extract tax from price
-        return sum +
-            (item.product.price - (item.product.price / (1 + taxRate))) *
-                item.quantity;
+        // For tax-inclusive prices, calculate the tax portion that was included
+        final priceWithoutTax = item.product.price / (1 + taxRate);
+        return sum + ((item.product.price - priceWithoutTax) * item.quantity);
       } else {
-        // For tax-exclusive items, calculate tax on price
+        // For tax-exclusive prices, calculate tax on the base price
         return sum + (item.product.price * taxRate * item.quantity);
       }
     });
   }
 
   double get couponDiscount {
-    return _coupons.fold(
-        0, (sum, coupon) => sum + coupon.calculateDiscount(subtotal));
+    return _coupons.fold<double>(
+        0.0, (sum, coupon) => sum + coupon.calculateDiscount(subtotal));
   }
 
   double get voucherDiscount {
-    return _vouchers.fold(0, (sum, voucher) {
+    return _vouchers.fold<double>(0.0, (sum, voucher) {
       if (voucher.isPercentage) {
         return sum + (subtotal * (voucher.value / 100));
       }
@@ -100,11 +108,21 @@ class CartState extends ChangeNotifier {
   double get tipAmount => (subtotal - totalDiscount) * (_tipPercentage / 100);
 
   double get total {
-    final subtotalAmount = subtotal;
-    final discountAmount = totalDiscount;
-    final tipAmount =
-        (subtotalAmount - discountAmount) * (_tipPercentage / 100);
-    return subtotalAmount - discountAmount + tipAmount + hst;
+    if (_settings.settings.taxInclusive) {
+      print('Included...');
+      // For tax-inclusive prices, we don't add tax since it's already included
+      final subtotalAmount = _items.fold<double>(0.0, (sum, item) => sum + (item.product.price * item.quantity));
+      final discountAmount = totalDiscount;
+      final tipAmount = (subtotalAmount - discountAmount) * (_tipPercentage / 100);
+      return subtotalAmount - discountAmount + tipAmount;
+    } else {
+      print('Exc...');
+      // For tax-exclusive prices, we need to add the tax
+      final subtotalAmount = subtotal;
+      final discountAmount = totalDiscount;
+      final tipAmount = (subtotalAmount - discountAmount) * (_tipPercentage / 100);
+      return subtotalAmount - discountAmount + tipAmount + hst;
+    }
   }
 
   void addItem(Product product, {int quantity = 1}) {
