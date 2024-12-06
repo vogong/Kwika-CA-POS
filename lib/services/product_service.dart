@@ -6,103 +6,123 @@ class ProductService {
   static const _delay = Duration(milliseconds: 800);
 
   // Mock product data
-  static final List<Map<String, dynamic>> _mockProducts = [
-    {
-      'id': '1',
-      'name': 'Coffee',
-      'price': 3.50,
-      'category': 'Beverages',
-      'imageUrl': 'https://picsum.photos/seed/coffee/200',
-      'description': 'Fresh brewed coffee',
-      'isAvailable': true,
-      'stockQuantity': 100
-    },
-    {
-      'id': '2',
-      'name': 'Tea',
-      'price': 2.50,
-      'category': 'Beverages',
-      'imageUrl': 'https://picsum.photos/seed/tea/200',
-      'description': 'Aromatic tea',
-      'isAvailable': true,
-      'stockQuantity': 150
-    },
-    {
-      'id': '3',
-      'name': 'Burger',
-      'price': 8.99,
-      'category': 'Food',
-      'imageUrl': 'https://picsum.photos/seed/burger/200',
-      'description': 'Juicy beef burger',
-      'isAvailable': true,
-      'stockQuantity': 50
-    },
-    {
-      'id': '4',
-      'name': 'Pizza',
-      'price': 12.99,
-      'category': 'Food',
-      'imageUrl': 'https://picsum.photos/seed/pizza/200',
-      'description': 'Fresh baked pizza',
-      'isAvailable': true,
-      'stockQuantity': 30
-    },
-    {
-      'id': '5',
-      'name': 'Salad',
-      'price': 7.99,
-      'category': 'Food',
-      'imageUrl': 'https://picsum.photos/seed/salad/200',
-      'description': 'Fresh garden salad',
-      'isAvailable': true,
-      'stockQuantity': 40
-    },
-    {
-      'id': '6',
-      'name': 'Ice Cream',
-      'price': 4.50,
-      'category': 'Desserts',
-      'imageUrl': 'https://picsum.photos/seed/icecream/200',
-      'description': 'Vanilla ice cream',
-      'isAvailable': true,
-      'stockQuantity': 80
-    },
+  static final List<Product> _mockProducts = [
+    Product(
+      id: 'P001',
+      name: 'Coffee',
+      description: 'Fresh brewed coffee',
+      price: 2.50,
+      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&auto=format&fit=crop&q=80',
+      category: 'Beverages',
+      includesTax: true,
+      isActive: true,
+    ),
+    Product(
+      id: 'P002',
+      name: 'Tea',
+      description: 'Hot tea',
+      price: 2.00,
+      imageUrl: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400&auto=format&fit=crop&q=80',
+      category: 'Beverages',
+      includesTax: true,
+      isActive: true,
+    ),
+    Product(
+      id: 'P003',
+      name: 'Muffin',
+      description: 'Freshly baked muffin',
+      price: 3.00,
+      imageUrl: 'https://images.unsplash.com/photo-1607958996333-41783d86c8fe?w=400&auto=format&fit=crop&q=80',
+      category: 'Pastries',
+      includesTax: false,
+      isActive: true,
+    ),
+    Product(
+      id: 'P004',
+      name: 'Sandwich',
+      description: 'Fresh sandwich',
+      price: 6.50,
+      imageUrl: 'https://images.unsplash.com/photo-1553909489-cd47e0907980?w=400&auto=format&fit=crop&q=80',
+      category: 'Food',
+      includesTax: false,
+      isActive: true,
+    ),
+    Product(
+      id: 'P005',
+      name: 'Burger',
+      description: 'Juicy beef burger',
+      price: 8.99,
+      imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=80',
+      category: 'Food',
+      includesTax: false,
+      isActive: true,
+    ),
+    Product(
+      id: 'P006',
+      name: 'Pizza',
+      description: 'Fresh baked pizza',
+      price: 12.99,
+      imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&auto=format&fit=crop&q=80',
+      category: 'Food',
+      includesTax: false,
+      isActive: true,
+    ),
+    Product(
+      id: 'P007',
+      name: 'Salad',
+      description: 'Fresh garden salad',
+      price: 7.99,
+      imageUrl: 'https://images.unsplash.com/photo-1567620905732-2c8b371f0364?w=400&auto=format&fit=crop&q=80',
+      category: 'Food',
+      includesTax: false,
+      isActive: true,
+    ),
+    Product(
+      id: 'P008',
+      name: 'Ice Cream',
+      description: 'Vanilla ice cream',
+      price: 4.50,
+      imageUrl: 'https://images.unsplash.com/photo-1578985245748-06f0b27b7e72?w=400&auto=format&fit=crop&q=80',
+      category: 'Desserts',
+      includesTax: false,
+      isActive: true,
+    ),
   ];
 
   // Simulate fetching products from API
   Future<List<Product>> getProducts() async {
     await Future.delayed(_delay);
-    return _mockProducts.map((json) => Product.fromJson(json)).toList();
+    return _mockProducts.where((product) => product.isActive).toList();
   }
 
   // Simulate fetching products by category
   Future<List<Product>> getProductsByCategory(String category) async {
     await Future.delayed(_delay);
     return _mockProducts
-        .where((product) => product['category'] == category)
-        .map((json) => Product.fromJson(json))
+        .where((product) => product.category == category && product.isActive)
         .toList();
   }
 
   // Simulate searching products
   Future<List<Product>> searchProducts(String query) async {
-    await Future.delayed(_delay);
     final lowercaseQuery = query.toLowerCase();
     return _mockProducts
         .where((product) =>
-            product['name'].toString().toLowerCase().contains(lowercaseQuery) ||
-            product['description'].toString().toLowerCase().contains(lowercaseQuery))
-        .map((json) => Product.fromJson(json))
+            product.isActive &&
+            (product.name.toLowerCase().contains(lowercaseQuery) ||
+            product.description.toLowerCase().contains(lowercaseQuery)))
         .toList();
   }
 
   // Simulate getting product by ID
   Future<Product?> getProductById(String id) async {
     await Future.delayed(_delay);
-    final productJson = _mockProducts.firstWhere(
-      (product) => product['id'] == id,
-      orElse: () => {},
-    );
-    return productJson.isEmpty ? null : Product.fromJson(productJson);
+    try {
+      return _mockProducts.firstWhere(
+        (product) => product.id == id,
+      );
+    } catch (e) {
+      return null;
+    }
   }
 }

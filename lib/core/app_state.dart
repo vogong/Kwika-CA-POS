@@ -1,7 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'models/product.dart';
 import 'models/coupon.dart';
+import 'models/voucher.dart';
+import 'models/settings.dart';
 import '../services/product_service.dart';
+import '../services/voucher_service.dart';
 
 class UserState extends ChangeNotifier {
   bool _isLoggedIn = false;
@@ -31,24 +34,69 @@ class CartItem {
 
 class CartState extends ChangeNotifier {
   final List<CartItem> _items = [];
-  double _tipPercentage = 0.0;
+  double _tipPercentage = 0;
   final Set<Coupon> _coupons = {};
+  final Set<Voucher> _vouchers = {};
+  final SettingsState _settings = SettingsState();
 
   List<CartItem> get items => _items;
   Set<Coupon> get coupons => _coupons;
+  Set<Voucher> get vouchers => _vouchers;
   double get tipPercentage => _tipPercentage;
 
-  double get subtotal => _items.fold(0, (sum, item) => sum + (item.product.price * item.quantity));
+  double get subtotal {
+    if (_settings.settings.taxInclusive) {
+      // If tax inclusive, subtotal is price with tax removed for tax-inclusive items
+      return _items.fold(0, (sum, item) {
+        final taxRate = _settings.settings.taxRate / 100;
+        if (item.product.includesTax) {
+          // Remove tax from price for tax-inclusive items
+          return sum + ((item.product.price / (1 + taxRate)) * item.quantity);
+        }
+        return sum + (item.product.price * item.quantity);
+      });
+    }
+    // If tax exclusive, subtotal is just sum of prices
+    return _items.fold(0, (sum, item) => sum + (item.product.price * item.quantity));
+  }
   
-  double get hst => _items.fold(0, (sum, item) => sum + (item.product.hstAmount * item.quantity));
-  
+  double get hst {
+    final taxRate = _settings.settings.taxRate / 100;
+    return _items.fold(0, (sum, item) {
+      if (_settings.settings.taxInclusive && item.product.includesTax) {
+        // For tax-inclusive items, extract tax from price
+        return sum + (item.product.price - (item.product.price / (1 + taxRate))) * item.quantity;
+      } else if (!_settings.settings.taxInclusive) {
+        // For tax-exclusive items, calculate tax on price
+        return sum + (item.product.price * taxRate * item.quantity);
+      }
+      return sum;
+    });
+  }
+
   double get couponDiscount {
     return _coupons.fold(0, (sum, coupon) => sum + coupon.calculateDiscount(subtotal));
   }
 
-  double get tipAmount => (subtotal - couponDiscount) * (_tipPercentage / 100);
+  double get voucherDiscount {
+    return _vouchers.fold(0, (sum, voucher) {
+      if (voucher.isPercentage) {
+        return sum + (subtotal * (voucher.value / 100));
+      }
+      return sum + voucher.value;
+    });
+  }
+
+  double get totalDiscount => couponDiscount + voucherDiscount;
+
+  double get tipAmount => (subtotal - totalDiscount) * (_tipPercentage / 100);
   
-  double get total => subtotal + hst - couponDiscount + tipAmount;
+  double get total {
+    final subtotalAmount = subtotal;
+    final discountAmount = totalDiscount;
+    final tipAmount = (subtotalAmount - discountAmount) * (_tipPercentage / 100);
+    return subtotalAmount - discountAmount + tipAmount + hst;
+  }
 
   void addItem(Product product, {int quantity = 1}) {
     final existingIndex = _items.indexWhere((item) => item.product.id == product.id);
@@ -95,9 +143,44 @@ class CartState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addCoupon(Coupon coupon) {
+  // Calculate the total after applying a new coupon
+  double _calculateTotalWithNewCoupon(Coupon newCoupon) {
+    final newCouponDiscount = newCoupon.calculateDiscount(subtotal);
+    final currentDiscountWithoutCoupons = voucherDiscount;
+    final tipAmount = (subtotal - (currentDiscountWithoutCoupons + newCouponDiscount)) * (_tipPercentage / 100);
+    return subtotal - (currentDiscountWithoutCoupons + newCouponDiscount) + tipAmount + hst;
+  }
+
+  // Calculate the total after applying a new voucher
+  double _calculateTotalWithNewVoucher(Voucher newVoucher) {
+    final newVoucherDiscount = newVoucher.isPercentage
+        ? subtotal * (newVoucher.value / 100)
+        : newVoucher.value;
+    final currentDiscountWithoutVouchers = couponDiscount;
+    final tipAmount = (subtotal - (currentDiscountWithoutVouchers + newVoucherDiscount)) * (_tipPercentage / 100);
+    return subtotal - (currentDiscountWithoutVouchers + newVoucherDiscount) + tipAmount + hst;
+  }
+
+  // Add coupon only if it won't result in negative total
+  bool addCoupon(Coupon coupon) {
+    final newTotal = _calculateTotalWithNewCoupon(coupon);
+    if (newTotal <= 0) {
+      return false;
+    }
     _coupons.add(coupon);
     notifyListeners();
+    return true;
+  }
+
+  // Add voucher only if it won't result in negative total
+  bool addVoucher(Voucher voucher) {
+    final newTotal = _calculateTotalWithNewVoucher(voucher);
+    if (newTotal <= 0) {
+      return false;
+    }
+    _vouchers.add(voucher);
+    notifyListeners();
+    return true;
   }
 
   void removeCoupon(Coupon coupon) {
@@ -107,6 +190,16 @@ class CartState extends ChangeNotifier {
 
   void clearCoupons() {
     _coupons.clear();
+    notifyListeners();
+  }
+
+  void removeVoucher(Voucher voucher) {
+    _vouchers.remove(voucher);
+    notifyListeners();
+  }
+
+  void clearVouchers() {
+    _vouchers.clear();
     notifyListeners();
   }
 }
@@ -215,5 +308,32 @@ class ProductState extends ChangeNotifier {
           .where((product) => product.category == _selectedCategory)
           .toList();
     }
+  }
+}
+
+class SettingsState extends ChangeNotifier {
+  Settings _settings = Settings();
+
+  Settings get settings => _settings;
+
+  void updateSettings({
+    String? currencySymbol,
+    String? currencyCode,
+    double? taxRate,
+    bool? taxInclusive,
+    String? taxName,
+  }) {
+    _settings = _settings.copyWith(
+      currencySymbol: currencySymbol,
+      currencyCode: currencyCode,
+      taxRate: taxRate,
+      taxInclusive: taxInclusive,
+      taxName: taxName,
+    );
+    notifyListeners();
+  }
+
+  String formatCurrency(double amount) {
+    return '${_settings.currencySymbol}${amount.toStringAsFixed(2)}';
   }
 }

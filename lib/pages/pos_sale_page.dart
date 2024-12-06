@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/app_state.dart';
 import '../core/models/product.dart';
+import '../core/models/voucher.dart';
+import '../services/voucher_service.dart';
 import 'order_finalize_page.dart';
 
 class POSSalePage extends StatefulWidget {
@@ -27,6 +29,8 @@ class _POSSalePageState extends State<POSSalePage> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebouncer;
   String _quantityInput = '';
+  final VoucherService _voucherService = VoucherService();
+  List<Voucher> _vouchers = [];
 
   @override
   void initState() {
@@ -49,6 +53,19 @@ class _POSSalePageState extends State<POSSalePage> {
           cartState.addItem(item.product, quantity: item.quantity);
         }
       });
+    }
+    
+    _loadVouchers();
+  }
+
+  Future<void> _loadVouchers() async {
+    try {
+      final vouchers = await _voucherService.getVouchers();
+      setState(() {
+        _vouchers = vouchers;
+      });
+    } catch (e) {
+      // Handle error
     }
   }
 
@@ -201,11 +218,93 @@ class _POSSalePageState extends State<POSSalePage> {
     return result ?? false;
   }
 
+  Widget _buildVoucherCard(Voucher voucher, CartState cartState) {
+    final isSelected = cartState.vouchers.contains(voucher);
+    
+    return Card(
+      elevation: isSelected ? 4 : 1,
+      color: isSelected ? Colors.blue[50] : null,
+      child: InkWell(
+        onTap: () {
+          if (isSelected) {
+            cartState.removeVoucher(voucher);
+          } else {
+            final added = cartState.addVoucher(voucher);
+            if (!added) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Cannot apply voucher: Total would be negative'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.card_giftcard,
+                  color: isSelected ? Colors.blue : Colors.grey[600],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      voucher.name,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 16,
+                      ),
+                    ),
+                    Text(
+                      voucher.description,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      voucher.isPercentage
+                          ? '${voucher.value.toStringAsFixed(0)}% off'
+                          : '\$${voucher.value.toStringAsFixed(2)} off',
+                      style: TextStyle(
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                const Icon(
+                  Icons.check_circle,
+                  color: Colors.blue,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartState = Provider.of<CartState>(context);
     final openOrdersState = Provider.of<OpenOrdersState>(context);
     final productState = Provider.of<ProductState>(context);
+    final settingsState = Provider.of<SettingsState>(context);
     
     return WillPopScope(
       onWillPop: () => _onWillPop(context, cartState, openOrdersState),
@@ -409,102 +508,126 @@ class _POSSalePageState extends State<POSSalePage> {
                           itemBuilder: (context, index) {
                             final product = productState.filteredProducts[index];
                             
-                            return Card(
-                              elevation: 2,
-                              child: InkWell(
-                                onTap: product.isAvailable
-                                  ? () {
-                                      cartState.addItem(product, quantity: selectedQuantity);
-                                      // Reset quantity after adding to cart
-                                      setState(() {
-                                        _quantityInput = '';
-                                      });
-                                    }
-                                  : null,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Row(
-                                    children: [
-                                      if (showImages)
-                                        Container(
-                                          width: 60,
-                                          height: 60,
-                                          margin: const EdgeInsets.only(right: 12),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey[200],
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(8),
-                                            child: Image.network(
-                                              product.imageUrl ?? 'https://picsum.photos/seed/${product.name.hashCode}/200',
-                                              fit: BoxFit.cover,
-                                              loadingBuilder: (context, child, loadingProgress) {
-                                                if (loadingProgress == null) return child;
-                                                return Center(
-                                                  child: SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child: CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      value: loadingProgress.expectedTotalBytes != null
-                                                          ? loadingProgress.cumulativeBytesLoaded / 
-                                                            loadingProgress.expectedTotalBytes!
-                                                          : null,
+                            return Opacity(
+                              opacity: product.isActive ? 1.0 : 0.5,
+                              child: Card(
+                                child: InkWell(
+                                  onTap: product.isActive
+                                      ? () {
+                                          cartState.addItem(product, quantity: selectedQuantity);
+                                          // Reset quantity after adding to cart
+                                          setState(() {
+                                            _quantityInput = '';
+                                          });
+                                        }
+                                      : null,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Row(
+                                      children: [
+                                        if (showImages)
+                                          Container(
+                                            width: 60,
+                                            height: 60,
+                                            margin: const EdgeInsets.only(right: 12),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[200],
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: ClipRRect(
+                                              borderRadius: BorderRadius.circular(8),
+                                              child: Image.network(
+                                                product.imageUrl ?? 'https://picsum.photos/seed/${product.name.hashCode}/200',
+                                                fit: BoxFit.cover,
+                                                loadingBuilder: (context, child, loadingProgress) {
+                                                  if (loadingProgress == null) return child;
+                                                  return Center(
+                                                    child: SizedBox(
+                                                      width: 20,
+                                                      height: 20,
+                                                      child: CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        value: loadingProgress.expectedTotalBytes != null
+                                                            ? loadingProgress.cumulativeBytesLoaded / 
+                                                              loadingProgress.expectedTotalBytes!
+                                                            : null,
+                                                      ),
                                                     ),
-                                                  ),
-                                                );
-                                              },
-                                              errorBuilder: (context, error, stackTrace) {
-                                                return const Center(
-                                                  child: Icon(
-                                                    Icons.image_not_supported,
-                                                    color: Colors.grey,
-                                                    size: 24,
-                                                  ),
-                                                );
-                                              },
+                                                  );
+                                                },
+                                                errorBuilder: (context, error, stackTrace) {
+                                                  return const Center(
+                                                    child: Icon(
+                                                      Icons.image_not_supported,
+                                                      color: Colors.grey,
+                                                      size: 24,
+                                                    ),
+                                                  );
+                                                },
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              product.name,
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                            if (product.description != null) ...[
-                                              const SizedBox(height: 4),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
                                               Text(
-                                                product.description!,
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey[600],
+                                                product.name,
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
-                                                maxLines: 1,
+                                                maxLines: 2,
                                                 overflow: TextOverflow.ellipsis,
                                               ),
-                                            ],
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '\$${product.price.toStringAsFixed(2)}',
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.green,
+                                              if (product.description != null) ...[
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  product.description!,
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                settingsState.formatCurrency(product.price),
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.green,
+                                                ),
                                               ),
-                                            ),
-                                          ],
+                                              if (!product.isActive)
+                                                Positioned(
+                                                  top: 4,
+                                                  right: 4,
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.red,
+                                                      borderRadius: BorderRadius.circular(12),
+                                                    ),
+                                                    child: const Text(
+                                                      'Unavailable',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -517,7 +640,34 @@ class _POSSalePageState extends State<POSSalePage> {
                 ],
               ),
             ),
-            // Cart section (right side)
+            // Voucher section
+            Expanded(
+              child: Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      'Available Vouchers',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(8.0),
+                      itemCount: _vouchers.length,
+                      itemBuilder: (context, index) {
+                        final voucher = _vouchers[index];
+                        return _buildVoucherCard(voucher, cartState);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Cart section
             Container(
               width: 300,
               color: Colors.grey[300],
@@ -534,12 +684,13 @@ class _POSSalePageState extends State<POSSalePage> {
                           title: Text(item.product.name),
                           subtitle: Row(
                             children: [
-                              Text('${item.quantity} × \$${item.product.price.toStringAsFixed(2)}'),
-                              if (item.product.includesHst)
-                                const Text(' (HST included)', 
+                              Text('${item.quantity} × ${settingsState.formatCurrency(item.product.price)}'),
+                              if (settingsState.settings.taxInclusive)
+                                Text(
+                                  ' (${settingsState.settings.taxName} included)',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey,
+                                    color: Colors.grey[600],
                                   ),
                                 ),
                             ],
@@ -548,7 +699,7 @@ class _POSSalePageState extends State<POSSalePage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                '\$${(item.product.price * item.quantity).toStringAsFixed(2)}',
+                                settingsState.formatCurrency(item.product.price * item.quantity),
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(width: 8),
@@ -582,15 +733,15 @@ class _POSSalePageState extends State<POSSalePage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('Subtotal:'),
-                            Text('\$${cartState.subtotal.toStringAsFixed(2)}'),
+                            Text(settingsState.formatCurrency(cartState.subtotal)),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('HST (13%):'),
-                            Text('\$${cartState.hst.toStringAsFixed(2)}'),
+                            Text('${settingsState.settings.taxName} (${settingsState.settings.taxRate}%):'),
+                            Text(settingsState.formatCurrency(cartState.hst)),
                           ],
                         ),
                         const Divider(height: 16),
@@ -605,7 +756,7 @@ class _POSSalePageState extends State<POSSalePage> {
                               ),
                             ),
                             Text(
-                              '\$${cartState.total.toStringAsFixed(2)}',
+                              settingsState.formatCurrency(cartState.total),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,

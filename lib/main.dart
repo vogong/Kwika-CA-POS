@@ -3,10 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
+import 'core/app_state.dart';
 import 'pages/login_page.dart';
 import 'pages/splash_page.dart';
 import 'pages/pos_sale_page.dart';
-import 'core/app_state.dart';
+import 'pages/settings_page.dart';
 
 void main() {
   runApp(
@@ -16,6 +17,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => CartState()),
         ChangeNotifierProvider(create: (_) => OpenOrdersState()),
         ChangeNotifierProvider(create: (_) => ProductState()),
+        ChangeNotifierProvider(create: (_) => SettingsState()),
       ],
       child: const MyApp(),
     ),
@@ -111,10 +113,29 @@ class MainScreen extends StatelessWidget {
         title: const Text('Kwika POS'),
         backgroundColor: Colors.deepOrange,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => userState.logout(),
-          ),
+          if (userState.isLoggedIn) ...[
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsPage(),
+                  ),
+                );
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () {
+                userState.logout();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              },
+            ),
+          ],
         ],
       ),
       body: Row(

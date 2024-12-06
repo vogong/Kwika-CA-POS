@@ -343,7 +343,13 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                   isPercentage: firstDigit == 1 || firstDigit == 2,
                 );
                 
-                cartState.addCoupon(coupon);
+                final added = cartState.addCoupon(coupon);
+                if (!added) {
+                  setState(() {
+                    errorText = 'Cannot apply coupon: Total would be negative';
+                  });
+                  return;
+                }
                 Navigator.pop(context);
               },
               child: const Text('Apply'),
@@ -430,6 +436,7 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
   @override
   Widget build(BuildContext context) {
     final cartState = context.watch<CartState>();
+    final settingsState = context.watch<SettingsState>();
 
     return Scaffold(
       appBar: AppBar(
@@ -567,11 +574,11 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                                 visualDensity: VisualDensity.compact,
                               ),
                               const SizedBox(width: 8),
-                              if (item.product.includesHst)
-                                const Text(
-                                  'HST Included',
+                              if (item.product.includesTax)
+                                Text(
+                                  'Tax Included',
                                   style: TextStyle(
-                                    color: Colors.grey,
+                                    color: Colors.grey.shade600,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -582,16 +589,16 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                '\$${(item.product.price * item.quantity).toStringAsFixed(2)}',
+                                settingsState.formatCurrency(item.product.price * item.quantity),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
                               ),
                               Text(
-                                '\$${item.product.price.toStringAsFixed(2)} each',
-                                style: const TextStyle(
-                                  color: Colors.grey,
+                                settingsState.formatCurrency(item.product.price),
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
                                   fontSize: 12,
                                 ),
                               ),
@@ -617,111 +624,120 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('Subtotal:'),
-                            Text('\$${cartState.subtotal.toStringAsFixed(2)}'),
+                            Text(settingsState.formatCurrency(cartState.subtotal)),
                           ],
                         ),
                         const SizedBox(height: 8),
+                        // Coupons section
+                        _buildCouponSection(cartState),
+                        const SizedBox(height: 8),
+                        // Vouchers section
+                        if (cartState.vouchers.isNotEmpty) ...[
+                          const Text(
+                            'Applied Vouchers:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          ...cartState.vouchers.map((voucher) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      voucher.name,
+                                      style: TextStyle(
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    Text(
+                                      voucher.description,
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      voucher.isPercentage
+                                          ? '-${voucher.value}%'
+                                          : '-${settingsState.formatCurrency(voucher.value)}',
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      icon: const Icon(Icons.close, size: 16),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () => cartState.removeVoucher(voucher),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          )).toList(),
+                          if (cartState.voucherDiscount > 0)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text('Total Voucher Discount:'),
+                                  Text(
+                                    '-${settingsState.formatCurrency(cartState.voucherDiscount)}',
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          const SizedBox(height: 8),
+                        ],
+                        // Tax
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('HST (13%):'),
-                            Text('\$${cartState.hst.toStringAsFixed(2)}'),
+                            Text('${settingsState.settings.taxName}:'),
+                            Text(settingsState.formatCurrency(cartState.hst)),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        // Tip section
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Tip:',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  '\$${cartState.tipAmount.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (cartState.tipPercentage > 0)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  '(${cartState.tipPercentage.toStringAsFixed(1)}%)',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 14,
-                                  ),
-                                  textAlign: TextAlign.end,
-                                ),
-                              ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              alignment: WrapAlignment.center,
-                              children: [
-                                _buildTipButton(cartState, 10),
-                                _buildTipButton(cartState, 15),
-                                _buildTipButton(cartState, 20),
-                                _buildCustomTipButton(cartState),
-                                _buildNoTipButton(cartState),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 16),
-                        // Order summary section
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                        // Tip
+                        if (cartState.tipAmount > 0) ...[
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Tip:'),
+                              Text(settingsState.formatCurrency(cartState.tipAmount)),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                        const Divider(),
+                        // Total
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
-                              'Order Summary',
+                              'Total:',
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            // Subtotal
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text('Subtotal:'),
-                                Text('\$${cartState.subtotal.toStringAsFixed(2)}'),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            // Coupons section
-                            _buildCouponSection(cartState),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Total:',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                                Text(
-                                  '\$${cartState.total.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              settingsState.formatCurrency(cartState.total),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -785,7 +801,7 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                       const SizedBox(height: 8),
                       if (_amountTenderedController.text.isNotEmpty)
                         Text(
-                          'Change: \$${(double.tryParse(_amountTenderedController.text) ?? 0 - cartState.total).toStringAsFixed(2)}',
+                          'Change: ${settingsState.formatCurrency((double.tryParse(_amountTenderedController.text) ?? 0 - cartState.total))}',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -797,8 +813,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                       const SizedBox(height: 8),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(
-                          color: Colors.red,
+                        style: TextStyle(
+                          color: Colors.red.shade600,
                           fontSize: 14,
                         ),
                       ),
