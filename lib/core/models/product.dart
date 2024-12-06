@@ -6,7 +6,7 @@ class Product {
   final String imageUrl;
   final String category;
   final bool isActive;
-  final bool includesTax;
+  final bool taxExempt;
 
   Product({
     required this.id,
@@ -16,7 +16,7 @@ class Product {
     this.imageUrl = '',
     this.category = '',
     this.isActive = true,
-    this.includesTax = false,
+    this.taxExempt = false,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -28,7 +28,7 @@ class Product {
       imageUrl: json['imageUrl'] as String? ?? '',
       category: json['category'] as String? ?? '',
       isActive: json['isActive'] as bool? ?? true,
-      includesTax: json['includesTax'] as bool? ?? false,
+      taxExempt: json['taxExempt'] as bool? ?? false,
     );
   }
 
@@ -41,7 +41,7 @@ class Product {
       'imageUrl': imageUrl,
       'category': category,
       'isActive': isActive,
-      'includesTax': includesTax,
+      'taxExempt': taxExempt,
     };
   }
 
@@ -53,7 +53,7 @@ class Product {
     String? imageUrl,
     String? category,
     bool? isActive,
-    bool? includesTax,
+    bool? taxExempt,
   }) {
     return Product(
       id: id ?? this.id,
@@ -63,7 +63,7 @@ class Product {
       imageUrl: imageUrl ?? this.imageUrl,
       category: category ?? this.category,
       isActive: isActive ?? this.isActive,
-      includesTax: includesTax ?? this.includesTax,
+      taxExempt: taxExempt ?? this.taxExempt,
     );
   }
 }

@@ -46,36 +46,44 @@ class CartState extends ChangeNotifier {
 
   double get subtotal {
     if (_settings.settings.taxInclusive) {
-      // If tax inclusive, subtotal is price with tax removed for tax-inclusive items
+      // If tax inclusive, subtotal is price with tax removed for taxable items
       return _items.fold(0, (sum, item) {
         final taxRate = _settings.settings.taxRate / 100;
-        if (item.product.includesTax) {
-          // Remove tax from price for tax-inclusive items
+        if (!item.product.taxExempt) {
+          // Remove tax from price for taxable items
           return sum + ((item.product.price / (1 + taxRate)) * item.quantity);
         }
         return sum + (item.product.price * item.quantity);
       });
     }
     // If tax exclusive, subtotal is just sum of prices
-    return _items.fold(0, (sum, item) => sum + (item.product.price * item.quantity));
+    return _items.fold(
+        0, (sum, item) => sum + (item.product.price * item.quantity));
   }
-  
+
   double get hst {
     final taxRate = _settings.settings.taxRate / 100;
     return _items.fold(0, (sum, item) {
-      if (_settings.settings.taxInclusive && item.product.includesTax) {
+      if (item.product.taxExempt) {
+        // No tax for tax-exempt items
+        return sum;
+      }
+      
+      if (_settings.settings.taxInclusive) {
         // For tax-inclusive items, extract tax from price
-        return sum + (item.product.price - (item.product.price / (1 + taxRate))) * item.quantity;
-      } else if (!_settings.settings.taxInclusive) {
+        return sum +
+            (item.product.price - (item.product.price / (1 + taxRate))) *
+                item.quantity;
+      } else {
         // For tax-exclusive items, calculate tax on price
         return sum + (item.product.price * taxRate * item.quantity);
       }
-      return sum;
     });
   }
 
   double get couponDiscount {
-    return _coupons.fold(0, (sum, coupon) => sum + coupon.calculateDiscount(subtotal));
+    return _coupons.fold(
+        0, (sum, coupon) => sum + coupon.calculateDiscount(subtotal));
   }
 
   double get voucherDiscount {
@@ -90,16 +98,18 @@ class CartState extends ChangeNotifier {
   double get totalDiscount => couponDiscount + voucherDiscount;
 
   double get tipAmount => (subtotal - totalDiscount) * (_tipPercentage / 100);
-  
+
   double get total {
     final subtotalAmount = subtotal;
     final discountAmount = totalDiscount;
-    final tipAmount = (subtotalAmount - discountAmount) * (_tipPercentage / 100);
+    final tipAmount =
+        (subtotalAmount - discountAmount) * (_tipPercentage / 100);
     return subtotalAmount - discountAmount + tipAmount + hst;
   }
 
   void addItem(Product product, {int quantity = 1}) {
-    final existingIndex = _items.indexWhere((item) => item.product.id == product.id);
+    final existingIndex =
+        _items.indexWhere((item) => item.product.id == product.id);
     if (existingIndex != -1) {
       _items[existingIndex].quantity += quantity;
     } else {
@@ -147,8 +157,13 @@ class CartState extends ChangeNotifier {
   double _calculateTotalWithNewCoupon(Coupon newCoupon) {
     final newCouponDiscount = newCoupon.calculateDiscount(subtotal);
     final currentDiscountWithoutCoupons = voucherDiscount;
-    final tipAmount = (subtotal - (currentDiscountWithoutCoupons + newCouponDiscount)) * (_tipPercentage / 100);
-    return subtotal - (currentDiscountWithoutCoupons + newCouponDiscount) + tipAmount + hst;
+    final tipAmount =
+        (subtotal - (currentDiscountWithoutCoupons + newCouponDiscount)) *
+            (_tipPercentage / 100);
+    return subtotal -
+        (currentDiscountWithoutCoupons + newCouponDiscount) +
+        tipAmount +
+        hst;
   }
 
   // Calculate the total after applying a new voucher
@@ -157,8 +172,13 @@ class CartState extends ChangeNotifier {
         ? subtotal * (newVoucher.value / 100)
         : newVoucher.value;
     final currentDiscountWithoutVouchers = couponDiscount;
-    final tipAmount = (subtotal - (currentDiscountWithoutVouchers + newVoucherDiscount)) * (_tipPercentage / 100);
-    return subtotal - (currentDiscountWithoutVouchers + newVoucherDiscount) + tipAmount + hst;
+    final tipAmount =
+        (subtotal - (currentDiscountWithoutVouchers + newVoucherDiscount)) *
+            (_tipPercentage / 100);
+    return subtotal -
+        (currentDiscountWithoutVouchers + newVoucherDiscount) +
+        tipAmount +
+        hst;
   }
 
   // Add coupon only if it won't result in negative total
@@ -251,10 +271,8 @@ class ProductState extends ChangeNotifier {
   String? get selectedCategory => _selectedCategory;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  List<String> get categories => _products
-      .map((p) => p.category)
-      .toSet()
-      .toList();
+  List<String> get categories =>
+      _products.map((p) => p.category).toSet().toList();
 
   // Initialize products
   Future<void> loadProducts() async {

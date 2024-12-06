@@ -12,9 +12,10 @@ class ProductService {
       name: 'Coffee',
       description: 'Fresh brewed coffee',
       price: 2.50,
-      imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&auto=format&fit=crop&q=80',
+      imageUrl:
+          'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&auto=format&fit=crop&q=80',
       category: 'Beverages',
-      includesTax: true,
+      taxExempt: false,
       isActive: true,
     ),
     Product(
@@ -22,9 +23,10 @@ class ProductService {
       name: 'Tea',
       description: 'Hot tea',
       price: 2.00,
-      imageUrl: 'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400&auto=format&fit=crop&q=80',
+      imageUrl:
+          'https://images.unsplash.com/photo-1597481499750-3e6b22637e12?w=400&auto=format&fit=crop&q=80',
       category: 'Beverages',
-      includesTax: true,
+      taxExempt: false,
       isActive: true,
     ),
     Product(
@@ -32,9 +34,10 @@ class ProductService {
       name: 'Muffin',
       description: 'Freshly baked muffin',
       price: 3.00,
-      imageUrl: 'https://images.unsplash.com/photo-1607958996333-41783d86c8fe?w=400&auto=format&fit=crop&q=80',
+      imageUrl:
+          'https://images.unsplash.com/photo-1607958996333-41783d86c8fe?w=400&auto=format&fit=crop&q=80',
       category: 'Pastries',
-      includesTax: false,
+      taxExempt: true,
       isActive: true,
     ),
     Product(
@@ -42,9 +45,10 @@ class ProductService {
       name: 'Sandwich',
       description: 'Fresh sandwich',
       price: 6.50,
-      imageUrl: 'https://images.unsplash.com/photo-1553909489-cd47e0907980?w=400&auto=format&fit=crop&q=80',
+      imageUrl:
+          'https://images.unsplash.com/photo-1553909489-cd47e0907980?w=400&auto=format&fit=crop&q=80',
       category: 'Food',
-      includesTax: false,
+      taxExempt: true,
       isActive: true,
     ),
     Product(
@@ -52,9 +56,10 @@ class ProductService {
       name: 'Burger',
       description: 'Juicy beef burger',
       price: 8.99,
-      imageUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=80',
+      imageUrl:
+          'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=80',
       category: 'Food',
-      includesTax: false,
+      taxExempt: false,
       isActive: true,
     ),
     Product(
@@ -62,9 +67,10 @@ class ProductService {
       name: 'Pizza',
       description: 'Fresh baked pizza',
       price: 12.99,
-      imageUrl: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&auto=format&fit=crop&q=80',
+      imageUrl:
+          'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&auto=format&fit=crop&q=80',
       category: 'Food',
-      includesTax: false,
+      taxExempt: false,
       isActive: true,
     ),
     Product(
@@ -72,9 +78,10 @@ class ProductService {
       name: 'Salad',
       description: 'Fresh garden salad',
       price: 7.99,
-      imageUrl: 'https://images.unsplash.com/photo-1567620905732-2c8b371f0364?w=400&auto=format&fit=crop&q=80',
+      imageUrl:
+          'https://images.unsplash.com/photo-1567620905732-2c8b371f0364?w=400&auto=format&fit=crop&q=80',
       category: 'Food',
-      includesTax: false,
+      taxExempt: false,
       isActive: true,
     ),
     Product(
@@ -82,9 +89,10 @@ class ProductService {
       name: 'Ice Cream',
       description: 'Vanilla ice cream',
       price: 4.50,
-      imageUrl: 'https://images.unsplash.com/photo-1578985245748-06f0b27b7e72?w=400&auto=format&fit=crop&q=80',
+      imageUrl:
+          'https://images.unsplash.com/photo-1578985245748-06f0b27b7e72?w=400&auto=format&fit=crop&q=80',
       category: 'Desserts',
-      includesTax: false,
+      taxExempt: false,
       isActive: true,
     ),
   ];
@@ -110,7 +118,7 @@ class ProductService {
         .where((product) =>
             product.isActive &&
             (product.name.toLowerCase().contains(lowercaseQuery) ||
-            product.description.toLowerCase().contains(lowercaseQuery)))
+                product.description.toLowerCase().contains(lowercaseQuery)))
         .toList();
   }
 

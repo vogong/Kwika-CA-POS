@@ -276,7 +276,8 @@ class _POSSalePageState extends State<POSSalePage> {
                     child: Text(
                       voucher.name,
                       style: TextStyle(
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                         fontSize: 14,
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -548,8 +549,8 @@ class _POSSalePageState extends State<POSSalePage> {
                                       itemCount:
                                           productState.filteredProducts.length,
                                       itemBuilder: (context, index) {
-                                        final product =
-                                            productState.filteredProducts[index];
+                                        final product = productState
+                                            .filteredProducts[index];
 
                                         return Opacity(
                                           opacity: product.isActive ? 1.0 : 0.5,
@@ -570,44 +571,45 @@ class _POSSalePageState extends State<POSSalePage> {
                                               child: Padding(
                                                 padding:
                                                     const EdgeInsets.all(12.0),
-                                                child: Row(
+                                                child: Stack(
                                                   children: [
-                                                    Container(
-                                                      width: 60,
-                                                      height: 60,
-                                                      margin:
-                                                          const EdgeInsets.only(
-                                                              right: 12),
-                                                      decoration: BoxDecoration(
-                                                        color:
-                                                            Colors.grey[200],
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                      ),
-                                                      child: ClipRRect(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                        child: Image.network(
-                                                          product.imageUrl ??
-                                                              'https://picsum.photos/seed/${product.name.hashCode}/200',
-                                                          fit: BoxFit.cover,
-                                                          loadingBuilder: (context,
-                                                              child,
-                                                              loadingProgress) {
-                                                            if (loadingProgress ==
-                                                                null)
-                                                              return child;
-                                                            return Center(
-                                                              child: SizedBox(
-                                                                width: 20,
-                                                                height: 20,
-                                                                child:
-                                                                    CircularProgressIndicator(
-                                                                  strokeWidth:
-                                                                      2,
-                                                                  value: loadingProgress
+                                                    Row(
+                                                      children: [
+                                                        Container(
+                                                          width: 60,
+                                                          height: 60,
+                                                          margin:
+                                                              const EdgeInsets.only(
+                                                                  right: 12),
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.grey[200],
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(8),
+                                                          ),
+                                                          child: ClipRRect(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(8),
+                                                            child: Image.network(
+                                                              product.imageUrl ??
+                                                                  'https://picsum.photos/seed/${product.name.hashCode}/200',
+                                                              fit: BoxFit.cover,
+                                                              loadingBuilder: (context,
+                                                                  child,
+                                                                  loadingProgress) {
+                                                                if (loadingProgress ==
+                                                                    null)
+                                                                  return child;
+                                                                return Center(
+                                                                  child: SizedBox(
+                                                                    width: 20,
+                                                                    height: 20,
+                                                                    child:
+                                                                        CircularProgressIndicator(
+                                                                      strokeWidth:
+                                                                          2,
+                                                                      value: loadingProgress
                                                                               .expectedTotalBytes !=
                                                                           null
                                                                       ? loadingProgress
@@ -615,113 +617,140 @@ class _POSSalePageState extends State<POSSalePage> {
                                                                           loadingProgress
                                                                               .expectedTotalBytes!
                                                                       : null,
-                                                                ),
-                                                              ),
-                                                            );
-                                                          },
-                                                          errorBuilder:
-                                                              (context, error,
-                                                                  stackTrace) {
-                                                            return const Center(
-                                                              child: Icon(
-                                                                Icons
-                                                                    .image_not_supported,
-                                                                color:
-                                                                    Colors.grey,
-                                                                size: 24,
-                                                              ),
-                                                            );
-                                                          },
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              },
+                                                              errorBuilder:
+                                                                  (context, error,
+                                                                      stackTrace) {
+                                                                return const Center(
+                                                                  child: Icon(
+                                                                    Icons
+                                                                        .image_not_supported,
+                                                                    color:
+                                                                        Colors.grey,
+                                                                    size: 24,
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          ),
                                                         ),
-                                                      ),
-                                                    ),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .center,
-                                                        children: [
-                                                          Text(
-                                                            product.name,
-                                                            style:
-                                                                const TextStyle(
-                                                              fontSize: 16,
-                                                              fontWeight:
-                                                                  FontWeight.bold,
-                                                            ),
-                                                            maxLines: 2,
-                                                            overflow: TextOverflow
-                                                                .ellipsis,
-                                                          ),
-                                                          if (product
-                                                                  .description !=
-                                                              null) ...[
-                                                            const SizedBox(
-                                                                height: 4),
-                                                            Text(
-                                                              product
-                                                                  .description!,
-                                                              style: TextStyle(
-                                                                fontSize: 12,
-                                                                color: Colors
-                                                                    .grey[600],
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .center,
+                                                            children: [
+                                                              Text(
+                                                                product.name,
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 16,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                                maxLines: 2,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
                                                               ),
-                                                              maxLines: 1,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                            ),
-                                                          ],
-                                                          const SizedBox(
-                                                              height: 4),
-                                                          Text(
-                                                            settingsState
-                                                                .formatCurrency(
-                                                                    product
-                                                                        .price),
-                                                            style:
-                                                                const TextStyle(
-                                                              fontSize: 14,
-                                                              color: Colors.green,
-                                                            ),
-                                                          ),
-                                                          if (!product.isActive)
-                                                            Positioned(
-                                                              top: 4,
-                                                              right: 4,
-                                                              child: Container(
-                                                                padding:
-                                                                    const EdgeInsets
-                                                                        .symmetric(
-                                                                  horizontal: 8,
-                                                                  vertical: 4,
-                                                                ),
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color:
-                                                                      Colors.red,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              12),
-                                                                ),
-                                                                child: const Text(
-                                                                  'Unavailable',
-                                                                  style:
-                                                                      TextStyle(
-                                                                    color: Colors
-                                                                        .white,
+                                                              if (product
+                                                                      .description !=
+                                                                  null) ...[
+                                                                const SizedBox(
+                                                                    height: 4),
+                                                                Text(
+                                                                  product
+                                                                      .description!,
+                                                                  style: TextStyle(
                                                                     fontSize: 12,
+                                                                    color: Colors
+                                                                        .grey[600],
+                                                                  ),
+                                                                  maxLines: 1,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                ),
+                                                              ],
+                                                              const SizedBox(
+                                                                  height: 4),
+                                                              Text(
+                                                                settingsState
+                                                                    .formatCurrency(
+                                                                        product
+                                                                            .price),
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 14,
+                                                                  color:
+                                                                      Colors.green,
+                                                                ),
+                                                              ),
+                                                              if (!product.isActive)
+                                                                Positioned(
+                                                                  top: 4,
+                                                                  right: 4,
+                                                                  child: Container(
+                                                                    padding:
+                                                                        const EdgeInsets
+                                                                            .symmetric(
+                                                                      horizontal: 8,
+                                                                      vertical: 4,
+                                                                    ),
+                                                                    decoration:
+                                                                        BoxDecoration(
+                                                                      color: Colors
+                                                                          .red,
+                                                                      borderRadius:
+                                                                          BorderRadius
+                                                                              .circular(
+                                                                                  12),
+                                                                    ),
+                                                                    child:
+                                                                        const Text(
+                                                                      'Unavailable',
+                                                                      style:
+                                                                          TextStyle(
+                                                                        color: Colors
+                                                                            .white,
+                                                                        fontSize:
+                                                                            12,
+                                                                      ),
+                                                                    ),
                                                                   ),
                                                                 ),
-                                                              ),
-                                                            ),
-                                                        ],
-                                                      ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
+                                                    if (product.taxExempt)
+                                                      Positioned(
+                                                        top: 0,
+                                                        right: 0,
+                                                        child: Container(
+                                                          padding: const EdgeInsets.all(4),
+                                                          decoration: BoxDecoration(
+                                                            shape: BoxShape.circle,
+                                                            color: Colors.red,
+                                                          ),
+                                                          child: const Text(
+                                                            'TAX',
+                                                            style: TextStyle(
+                                                              fontSize: 10,
+                                                              fontWeight: FontWeight.bold,
+                                                              color: Colors.white,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
                                                   ],
                                                 ),
                                               ),
@@ -765,10 +794,12 @@ class _POSSalePageState extends State<POSSalePage> {
                                       color: Colors.transparent,
                                       child: InkWell(
                                         onTap: () {
-                                          final currentPos = _voucherScrollController.offset;
+                                          final currentPos =
+                                              _voucherScrollController.offset;
                                           _voucherScrollController.animateTo(
                                             currentPos - 160,
-                                            duration: const Duration(milliseconds: 300),
+                                            duration: const Duration(
+                                                milliseconds: 300),
                                             curve: Curves.easeInOut,
                                           );
                                         },
@@ -778,10 +809,13 @@ class _POSSalePageState extends State<POSSalePage> {
                                             child: Container(
                                               padding: const EdgeInsets.all(8),
                                               decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(0.8),
+                                                color: Colors.white
+                                                    .withOpacity(0.8),
                                                 shape: BoxShape.circle,
                                               ),
-                                              child: const Icon(Icons.chevron_left, size: 24),
+                                              child: const Icon(
+                                                  Icons.chevron_left,
+                                                  size: 24),
                                             ),
                                           ),
                                         ),
@@ -792,15 +826,18 @@ class _POSSalePageState extends State<POSSalePage> {
                                       child: ListView.builder(
                                         controller: _voucherScrollController,
                                         scrollDirection: Axis.horizontal,
-                                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8.0),
                                         itemCount: _vouchers.length,
                                         itemBuilder: (context, index) {
                                           final voucher = _vouchers[index];
                                           return Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 4.0),
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 4.0, vertical: 4.0),
                                             child: SizedBox(
                                               width: 160,
-                                              child: _buildVoucherCard(voucher, cartState),
+                                              child: _buildVoucherCard(
+                                                  voucher, cartState),
                                             ),
                                           );
                                         },
@@ -811,10 +848,12 @@ class _POSSalePageState extends State<POSSalePage> {
                                       color: Colors.transparent,
                                       child: InkWell(
                                         onTap: () {
-                                          final currentPos = _voucherScrollController.offset;
+                                          final currentPos =
+                                              _voucherScrollController.offset;
                                           _voucherScrollController.animateTo(
                                             currentPos + 160,
-                                            duration: const Duration(milliseconds: 300),
+                                            duration: const Duration(
+                                                milliseconds: 300),
                                             curve: Curves.easeInOut,
                                           );
                                         },
@@ -824,10 +863,13 @@ class _POSSalePageState extends State<POSSalePage> {
                                             child: Container(
                                               padding: const EdgeInsets.all(8),
                                               decoration: BoxDecoration(
-                                                color: Colors.white.withOpacity(0.8),
+                                                color: Colors.white
+                                                    .withOpacity(0.8),
                                                 shape: BoxShape.circle,
                                               ),
-                                              child: const Icon(Icons.chevron_right, size: 24),
+                                              child: const Icon(
+                                                  Icons.chevron_right,
+                                                  size: 24),
                                             ),
                                           ),
                                         ),

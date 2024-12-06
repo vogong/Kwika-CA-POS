@@ -14,7 +14,8 @@ class OrderFinalizePage extends StatefulWidget {
 
 class _OrderFinalizePageState extends State<OrderFinalizePage> {
   PaymentMethod? _selectedPaymentMethod;
-  final TextEditingController _amountTenderedController = TextEditingController();
+  final TextEditingController _amountTenderedController =
+      TextEditingController();
   String? _errorMessage;
 
   @override
@@ -35,7 +36,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
       final amountTendered = double.tryParse(_amountTenderedController.text);
       if (amountTendered == null || amountTendered < cartState.total) {
         setState(() {
-          _errorMessage = 'Please enter a valid amount equal to or greater than the total';
+          _errorMessage =
+              'Please enter a valid amount equal to or greater than the total';
         });
         return;
       }
@@ -47,7 +49,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Payment Successful'),
-        content: Text('Payment processed via ${_selectedPaymentMethod!.displayName}'),
+        content: Text(
+            'Payment processed via ${_selectedPaymentMethod!.displayName}'),
         actions: [
           TextButton(
             onPressed: () {
@@ -83,7 +86,9 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
               Icon(
                 method.icon,
                 size: 32,
-                color: _selectedPaymentMethod == method ? Colors.blue : Colors.grey[700],
+                color: _selectedPaymentMethod == method
+                    ? Colors.blue
+                    : Colors.grey[700],
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -94,7 +99,9 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                       method.displayName,
                       style: TextStyle(
                         fontSize: 18,
-                        fontWeight: _selectedPaymentMethod == method ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: _selectedPaymentMethod == method
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -149,7 +156,7 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
         cartState.tipPercentage != 10 &&
         cartState.tipPercentage != 15 &&
         cartState.tipPercentage != 20;
-    
+
     return ElevatedButton(
       onPressed: () => _showCustomTipDialog(context, cartState),
       style: ElevatedButton.styleFrom(
@@ -203,7 +210,7 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
           ? cartState.tipPercentage.toString()
           : '',
     );
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -213,7 +220,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
           children: [
             TextField(
               controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               autofocus: true,
               decoration: const InputDecoration(
                 labelText: 'Tip Percentage',
@@ -265,7 +273,7 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
   void _showCouponDialog(BuildContext context, CartState cartState) {
     final controller = TextEditingController();
     String? errorText;
-    
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -318,7 +326,7 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                   return;
                 }
 
-                // For testing: 
+                // For testing:
                 // Codes starting with 1: 10% off
                 // Codes starting with 2: 20% off
                 // Codes starting with 5: $5 off
@@ -342,7 +350,7 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                   },
                   isPercentage: firstDigit == 1 || firstDigit == 2,
                 );
-                
+
                 final added = cartState.addCoupon(coupon);
                 if (!added) {
                   setState(() {
@@ -391,28 +399,28 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
             child: Column(
               children: [
                 ...cartState.coupons.map((coupon) => ListTile(
-                  title: Text(coupon.code),
-                  subtitle: Text(coupon.description),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        coupon.isPercentage
-                            ? '-${coupon.amount.toStringAsFixed(0)}%'
-                            : '-\$${coupon.amount.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      title: Text(coupon.code),
+                      subtitle: Text(coupon.description),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            coupon.isPercentage
+                                ? '-${coupon.amount.toStringAsFixed(0)}%'
+                                : '-\$${coupon.amount.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => cartState.removeCoupon(coupon),
+                            color: Colors.red,
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => cartState.removeCoupon(coupon),
-                        color: Colors.red,
-                      ),
-                    ],
-                  ),
-                )),
+                    )),
               ],
             ),
           ),
@@ -480,7 +488,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                               borderRadius: BorderRadius.circular(8),
                               image: item.product.imageUrl != null
                                   ? DecorationImage(
-                                      image: NetworkImage(item.product.imageUrl!),
+                                      image:
+                                          NetworkImage(item.product.imageUrl!),
                                       fit: BoxFit.cover,
                                       onError: (_, __) {
                                         // Handle image load error
@@ -490,7 +499,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                               color: Colors.grey[200],
                             ),
                             child: item.product.imageUrl == null
-                                ? const Icon(Icons.image_not_supported, color: Colors.grey)
+                                ? const Icon(Icons.image_not_supported,
+                                    color: Colors.grey)
                                 : null,
                           ),
                           title: Text(item.product.name),
@@ -500,7 +510,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                               IconButton(
                                 icon: const Icon(Icons.remove_circle_outline),
                                 onPressed: item.quantity > 1
-                                    ? () => cartState.updateQuantity(index, item.quantity - 1)
+                                    ? () => cartState.updateQuantity(
+                                        index, item.quantity - 1)
                                     : null,
                                 iconSize: 20,
                                 padding: EdgeInsets.zero,
@@ -513,7 +524,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                                     showDialog(
                                       context: context,
                                       builder: (context) {
-                                        final controller = TextEditingController(
+                                        final controller =
+                                            TextEditingController(
                                           text: item.quantity.toString(),
                                         );
                                         return AlertDialog(
@@ -529,14 +541,19 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                                           ),
                                           actions: [
                                             TextButton(
-                                              onPressed: () => Navigator.pop(context),
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
                                               child: const Text('Cancel'),
                                             ),
                                             TextButton(
                                               onPressed: () {
-                                                final newQuantity = int.tryParse(controller.text);
-                                                if (newQuantity != null && newQuantity > 0) {
-                                                  cartState.updateQuantity(index, newQuantity);
+                                                final newQuantity =
+                                                    int.tryParse(
+                                                        controller.text);
+                                                if (newQuantity != null &&
+                                                    newQuantity > 0) {
+                                                  cartState.updateQuantity(
+                                                      index, newQuantity);
                                                   Navigator.pop(context);
                                                 }
                                               },
@@ -553,7 +570,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      border: Border.all(color: Colors.grey[300]!),
+                                      border:
+                                          Border.all(color: Colors.grey[300]!),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
@@ -568,15 +586,16 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                               ),
                               IconButton(
                                 icon: const Icon(Icons.add_circle_outline),
-                                onPressed: () => cartState.updateQuantity(index, item.quantity + 1),
+                                onPressed: () => cartState.updateQuantity(
+                                    index, item.quantity + 1),
                                 iconSize: 20,
                                 padding: EdgeInsets.zero,
                                 visualDensity: VisualDensity.compact,
                               ),
                               const SizedBox(width: 8),
-                              if (item.product.includesTax)
+                              if (!item.product.taxExempt)
                                 Text(
-                                  'Tax Included',
+                                  'Tax Applies',
                                   style: TextStyle(
                                     color: Colors.grey.shade600,
                                     fontSize: 12,
@@ -589,14 +608,16 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                settingsState.formatCurrency(item.product.price * item.quantity),
+                                settingsState.formatCurrency(
+                                    item.product.price * item.quantity),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
                               ),
                               Text(
-                                settingsState.formatCurrency(item.product.price),
+                                settingsState
+                                    .formatCurrency(item.product.price),
                                 style: TextStyle(
                                   color: Colors.grey.shade600,
                                   fontSize: 12,
@@ -624,7 +645,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('Subtotal:'),
-                            Text(settingsState.formatCurrency(cartState.subtotal)),
+                            Text(settingsState
+                                .formatCurrency(cartState.subtotal)),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -640,55 +662,65 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                             ),
                           ),
                           const SizedBox(height: 4),
-                          ...cartState.vouchers.map((voucher) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      voucher.name,
-                                      style: TextStyle(
-                                        color: Colors.grey.shade700,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                          ...cartState.vouchers
+                              .map((voucher) => Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 2),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              voucher.name,
+                                              style: TextStyle(
+                                                color: Colors.grey.shade700,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            Text(
+                                              voucher.description,
+                                              style: TextStyle(
+                                                color: Colors.grey.shade600,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              voucher.isPercentage
+                                                  ? '-${voucher.value}%'
+                                                  : '-${settingsState.formatCurrency(voucher.value)}',
+                                              style: const TextStyle(
+                                                  color: Colors.red),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              icon: const Icon(Icons.close,
+                                                  size: 16),
+                                              padding: EdgeInsets.zero,
+                                              constraints:
+                                                  const BoxConstraints(),
+                                              onPressed: () => cartState
+                                                  .removeVoucher(voucher),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                    Text(
-                                      voucher.description,
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Row(
-                                  children: [
-                                    Text(
-                                      voucher.isPercentage
-                                          ? '-${voucher.value}%'
-                                          : '-${settingsState.formatCurrency(voucher.value)}',
-                                      style: const TextStyle(color: Colors.red),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(Icons.close, size: 16),
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      onPressed: () => cartState.removeVoucher(voucher),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          )).toList(),
+                                  ))
+                              .toList(),
                           if (cartState.voucherDiscount > 0)
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text('Total Voucher Discount:'),
                                   Text(
@@ -715,7 +747,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text('Tip:'),
-                              Text(settingsState.formatCurrency(cartState.tipAmount)),
+                              Text(settingsState
+                                  .formatCurrency(cartState.tipAmount)),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -795,7 +828,8 @@ class _OrderFinalizePageState extends State<OrderFinalizePage> {
                           border: const OutlineInputBorder(),
                           errorText: _errorMessage,
                         ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
                         onChanged: (_) => setState(() => _errorMessage = null),
                       ),
                       const SizedBox(height: 8),
